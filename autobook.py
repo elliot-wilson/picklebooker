@@ -36,9 +36,12 @@ def central_today_at(hour: int, minute: int, second: int = 0) -> datetime:
     )
 
 
-def hybrid_wait_until(target: datetime, label: str) -> None:
+def hybrid_wait_until(target: datetime, label: str, on_status=None) -> None:
     """Sleep coarsely until close to `target`, then tight-poll the final seconds."""
-    print(f"Waiting until {target.strftime('%H:%M:%S %Z')} ({label})...")
+    msg = f"Waiting until {target.strftime('%H:%M:%S %Z')} ({label})..."
+    print(msg)
+    if on_status:
+        on_status(msg)
 
     while True:
         remaining = (target - now_central()).total_seconds()
@@ -54,12 +57,30 @@ def hybrid_wait_until(target: datetime, label: str) -> None:
     print(f"It's {now_central().strftime('%H:%M:%S %Z')} — proceeding with {label}.")
 
 
+def booking_window_date(date: str) -> datetime:
+    """Return the date the booking window opens for a given target date."""
+    target_date = datetime.strptime(date, "%Y-%m-%d")
+    return (target_date - timedelta(days=8)).date()
+
+
+def is_too_early(date: str) -> bool:
+    """Check if the booking window hasn't opened yet for the given date."""
+    return booking_window_date(date) > now_central().date()
+
+
 def autobook(
     date: str,
     book_time: str,
     court: int = 3,
     duration: int = 90,
+    on_status=None,
 ) -> None:
+    """Run the full autobook flow. Optional `on_status` callback receives status strings.
+
+    When called from CLI, the too-early check is handled via input().
+    When called from the GUI, the caller should check is_too_early() beforehand
+    and handle the prompt itself.
+    """
     caffeinate_proc = start_caffeinate()
     print("Caffeinate started — macOS will stay awake until this script exits.")
 
@@ -67,7 +88,8 @@ def autobook(
     run_date = (target_date - timedelta(days=8)).date()
     today = now_central().date()
 
-    if run_date > today:
+    # CLI-only too-early guard — GUI callers should check is_too_early() first
+    if run_date > today and on_status is None:
         answer = input(
             f"Booking window for {date} doesn't open until {run_date}. Proceed anyway? (y/n): "
         )
@@ -83,15 +105,19 @@ def autobook(
     past_auth = now >= auth_time
 
     if not past_auth:
-        hybrid_wait_until(auth_time, "authentication")
+        hybrid_wait_until(auth_time, "authentication", on_status)
 
+    if on_status:
+        on_status("Authenticating...")
     print()
     extract_authentication_headers()
     print()
 
     if not past_book:
-        hybrid_wait_until(book_time_target, "booking")
+        hybrid_wait_until(book_time_target, "booking", on_status)
 
+    if on_status:
+        on_status("Booking...")
     print()
     reserve(date=date, time=book_time, court=court, duration=duration)
 
