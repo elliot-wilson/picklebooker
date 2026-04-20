@@ -44,31 +44,21 @@ echo "ACCOUNT_USERNAME=username" >> .env
 echo "ACCOUNT_PASSWORD=1234Password" >> .env
 ```
 
-6. Add your Python venv path to the `.env` file:
-
-```
-echo "PYTHON_PATH=$(which python3)" >> .env
-```
-
 ## Using Picklebooker
 
 ### Overview
 
-Picklebooker is designed to let you schedule a pickleball court without needing to be at your computer at the exact moment the reservation becomes available.  By providing the `date`, `time`, and optional `court` and `duration` values of the slot you'd like to book, you can schedule a Mac task that will attempt to book it at 9am Central 8 days in advance. Your computer _must be awake and logged in_, however, so you may want to install a tool like Caffeinate to keep it from falling asleep when it's trying to make a booking.
+Picklebooker is designed to let you book a pickleball court without needing to be at your computer at the exact moment the reservation becomes available. By providing the `date`, `time`, and optional `court` and `duration` values of the slot you'd like to book, Picklebooker will automatically authenticate at 8:55am Central and book the court at 9am Central, 8 days in advance. It keeps your Mac awake automatically using `caffeinate`, so you can start it and walk away.
 
 ### The simple way
 
-The simplest way to run Picklebooker is to double-click the `picklebooker.command` file. That will open a small GUI that lets you enter in the arguments for the scheduler.
+The simplest way to run Picklebooker is to double-click the `picklebooker.command` file. That will open a small GUI that lets you enter in the arguments for the booking. Click "Book" and the script will wait in the background until the booking window opens.
 
 If you'd like to move that command file somewhere else on your computer (e.g. to your Desktop), just edit line 2 so that it points to the absolute path of your picklebooker directory (for example, `~/Documents/picklebooker`).
 
-### Running the scripts by hand
+### Running from the command line
 
-If you don't want to rely on the scheduler, you can run the tasks by hand. This will fire them immediately.
-
-First, you need to run `python3 extract_authentication_headers.py`. This script logs into your Lifetime account (using the username/password you supplied in the `.env` file) and saves your authentication headers to a local file. You'll need those headers to make requests to Lifetime's API. This script needs to be run shortly before you attempt to reserve a court.
-
-Next, run `python3 reserve.py` with arguments specifying which court you want to book and when. For example, you could run `python3 reserve.py --date 2025-05-06 --time 13:00 --court 3` if you want it to book court 3 at 1:00pm on May 6th. NOTE: This script will run immediately, so if you are trying to book a court on the day of the release, you'll need to press Enter at exactly 9am Central.
+You can also run Picklebooker from the Terminal. Run `python3 autobook.py` with arguments specifying which court you want to book and when. For example: `python3 autobook.py --date 2025-05-06 --time 13:00 --court 3`. The script will wait until 8:55am Central to authenticate and 9:00am Central to book. If the booking window has already opened, it will authenticate and book immediately.
 
 The arguments are as follows:
 
@@ -76,3 +66,11 @@ The arguments are as follows:
 - `--time`: an HH:MM 24-hour time string like 11:00 .
 - `--court`: the court number. allowed values are 1, 2, or 3. 3 is the default, so you do not _have_ to supply this argument.
 - `--duration`: how long to reserve for. allowed values are 30, 60, or 90. 90 is the default, so you do not _have_ to supply this argument.
+
+### Running the scripts by hand
+
+If you want to run the authentication and booking steps yourself, you can run them individually.
+
+`python3 extract_authentication_headers.py` logs into your Lifetime account (using the username/password you supplied in the `.env` file) and saves your authentication headers to a local file. This needs to be run shortly before you attempt to reserve a court.
+
+`python3 reserve.py --date 2025-05-06 --time 13:00 --court 3` attempts to book immediately using the saved authentication headers.
