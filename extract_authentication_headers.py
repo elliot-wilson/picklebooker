@@ -39,9 +39,9 @@ def extract_authentication_headers():
         context.route("**/*", handle_route)
 
         page.goto("https://my.lifetime.life/login.html")
-        page.fill("input#account-username", username)
-        page.fill("input#account-password", password)
-        page.click("button#login-btn")
+        page.fill("input#signInName", username)
+        page.fill("input#password", password)
+        page.click("button#next")
         page.wait_for_url("**/*.html", timeout=10000)
 
         page.goto(TARGET_URL)
