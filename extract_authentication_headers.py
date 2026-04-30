@@ -22,7 +22,7 @@ REDIRECT_URI = "https://my.lifetime.life/login/landing.html"
 SCOPE = f"openid https://{B2C_TENANT}/{CLIENT_ID}/read profile offline_access"
 
 # Public API key embedded in Lifetime's frontend JS — same for all users
-API_KEY = "924c03ce573d473793e184219a6a19bd"
+PUBLIC_API_KEY = "924c03ce573d473793e184219a6a19bd"
 
 
 def generate_pkce_pair():
@@ -148,7 +148,7 @@ def extract_authentication_headers():
         "x-ltf-ssoid": ssoid,
         "x-ltf-jwe": access_token,
         "x-ltf-profile": json.dumps({"ssoId": ssoid}),
-        "ocp-apim-subscription-key": API_KEY,
+        "ocp-apim-subscription-key": PUBLIC_API_KEY,
     }
 
     with open(os.path.join(BASE_DIR, AUTH_HEADERS_PATH), "w") as f:
